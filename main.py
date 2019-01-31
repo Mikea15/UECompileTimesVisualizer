@@ -144,6 +144,11 @@ with open(log_file, "r", encoding="utf-8-sig") as file:
         line = get_line().strip()
         assert line == string, line + "!=" + string
 
+    def parse_until_string(string):
+        line = get_line().strip()
+        while string not in line:
+            line = get_line().strip()
+        assert line == string, line + "!=" + string
 
     def try_parse_string(string):
         line = get_line_for_try().strip()
@@ -153,14 +158,12 @@ with open(log_file, "r", encoding="utf-8-sig") as file:
         else:
             return False
 
-
     def try_parse_int(string):
         line = get_line_for_try().strip()
         if string not in line:
             return 0
         else:
             return parse_int(string)
-
 
     def try_parse_float(string, suffix):
         line = get_line_for_try().strip()
@@ -169,10 +172,8 @@ with open(log_file, "r", encoding="utf-8-sig") as file:
         else:
             return parse_float(string, suffix)
 
-
     def try_parse_seconds(string):
         return try_parse_float(string, " sec")
-
 
     def try_parse_empty():
         line = get_line_for_try().strip()
@@ -182,11 +183,14 @@ with open(log_file, "r", encoding="utf-8-sig") as file:
         else:
             return False
 
-
     def parse_beginstring(string):
         line = get_line().strip()
         assert line.startswith(string), "{} does not start with {}".format(line, string)
 
+    def parse_until_beginstring(string):
+        line = get_line().strip()
+        while not line.startswith(string):
+            line = get_line().strip()
 
     def parse_tree(count, current_file, getname=lambda x: x):
         current_indent = 0
@@ -237,11 +241,9 @@ with open(log_file, "r", encoding="utf-8-sig") as file:
         if count > 0:
             tree = parse_tree(count, current_file, getname)
 
-            parse_empty()
-
             for _ in range(parse_top()):
                 file.readline()
-        parse_empty()
+
         total = parse_total()
         if tree is not None:
             tree.time = total
@@ -268,13 +270,14 @@ with open(log_file, "r", encoding="utf-8-sig") as file:
                 continue
 
         extension = ""
-        for ext in [".h", ".cpp", ".rc", ".lib", ".dll", ".exe"]:
+        for ext in [".h", ".cpp", ".rc", ".c", ".lib", ".dll", ".exe"]:
             if ext in line:
                 extension = ext
                 break
         else:
-            assert False, "Invalid file name: " + line
-
+            print("Skip Invalid file name: " + line)
+            continue
+            
         if configuration == "Unreal":
             line = line.split("]")[1]
 
@@ -304,7 +307,7 @@ with open(log_file, "r", encoding="utf-8-sig") as file:
         functions_tree = parse_section(current_file)
         print("    Functions parsed!")
 
-        parse_beginstring("time(")
+        parse_until_beginstring("time(")
 
         if try_parse_string("Code Generation Summary"):
             parse_int("Total Function Count:")
@@ -315,7 +318,6 @@ with open(log_file, "r", encoding="utf-8-sig") as file:
                 get_line()
             try_parse_int("Serialized Initializer Count:")
             try_parse_seconds("Serialized Initializer Time:")
-            parse_empty()
 
         if try_parse_string("RdrReadProc Caching Stats"):
             parse_int("Functions Cached:")
@@ -325,14 +327,10 @@ with open(log_file, "r", encoding="utf-8-sig") as file:
             parse_int("Wasted Caching Attempts:")
             parse_int("Functions Retrieved at Least Once:")
             parse_int("Functions Cached and Never Retrieved:")
-            parse_string("Most Hits:")
-            while not try_parse_empty():
-                get_line()
-            parse_string("Least Hits:")
-            while not try_parse_empty():
-                get_line()
+            parse_until_string("Most Hits:")
+            parse_until_string("Least Hits:")
 
-        parse_beginstring("time(")
+        parse_until_beginstring("time(")
 
         map[current_file] = includes_tree, classes_tree, functions_tree
 
