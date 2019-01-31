@@ -62,6 +62,11 @@ else
 * It'll create 3 csv: *result_includes.csv*, *result_functions.csv*, *result_classes.csv*. You can open those in [wiztree](https://antibody-software.com/web/software/software/wiztree-finds-the-files-and-folders-using-the-most-disk-space-on-your-hard-drive/)
 * 1MB = 1s
 
+### Amazon Lumberyard
+* Follow same instructions as MSVC
+* Run ly_filter.py on your Log.txt, provide an Ouput file.
+* Run **main.py** on the new Output file.
+
 ### Script args
 
 First arg: log file, defaults to `Log.txt`
